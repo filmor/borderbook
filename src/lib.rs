@@ -1,5 +1,7 @@
 mod order;
 mod orderbook;
+mod trade;
+mod matching;
 
 pub use order::{Order, Direction};
 
