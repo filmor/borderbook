@@ -1,4 +1,4 @@
-use order::{Orderbook, Order, Direction};
+use {Orderbook, Order, Direction};
 use std::hash::Hash;
 use trade::Trade;
 use std::iter::Peekable;
@@ -45,7 +45,10 @@ fn match_single_order<I, K: Hash + Eq + Clone>(
 {
     if let Some(order) = order {
         if let Some(other_order) = iter.peek() {
-            None // TODO
+            let _ = order;
+            let _ = other_order; () // TODO
         }
     }
+
+    None
 }
