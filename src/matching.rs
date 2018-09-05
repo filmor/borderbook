@@ -43,5 +43,9 @@ fn match_single_order<I, K: Hash + Eq + Clone>(
     -> Option<Trade<K>>
     where I: Iterator<Item=Order>
 {
-    None
+    if let Some(order) = order {
+        if let Some(other_order) = iter.peek() {
+            None // TODO
+        }
+    }
 }
