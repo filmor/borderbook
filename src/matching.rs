@@ -3,10 +3,11 @@ use std::hash::Hash;
 use trade::Trade;
 use std::iter::Peekable;
 
-pub fn match_sides<K: Hash + Eq + Clone>(
-    ask: &mut Orderbook<K>, bid: &mut Orderbook<K>)
+pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>)
 -> Vec<Trade<K>>
 {
+    let ref mut ask = ob.asks;
+    let ref mut bid = ob.bids;
 
     let mut ask_iter = ask.into_iter().peekable();
     let mut bid_iter = bid.into_iter().peekable();

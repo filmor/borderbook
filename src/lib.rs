@@ -1,4 +1,5 @@
 mod order;
+mod side;
 mod orderbook;
 mod trade;
 mod matching;
@@ -7,6 +8,7 @@ mod io;
 
 pub use order::Order;
 pub use direction::Direction;
+pub use side::Side;
 pub use orderbook::Orderbook;
 pub use io::parse_orderbook;
 
