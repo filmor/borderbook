@@ -11,7 +11,7 @@ pub struct Orderbook<K>
 where
     K: Hash + Eq + Clone,
 {
-    direction: Direction,
+    pub direction: Direction,
 
     map: HashMap<K, usize>,
     inverse_map: HashMap<usize, K>,

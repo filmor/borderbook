@@ -52,3 +52,13 @@ fn match_single_order<I, K: Hash + Eq + Clone>(
 
     None
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn match_sides() {
+    }
+}
