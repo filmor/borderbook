@@ -1,4 +1,4 @@
-
+#[derive(Debug)]
 pub struct Trade<K> {
     pub buy_key: K,
     pub sell_key: K,

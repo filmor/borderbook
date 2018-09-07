@@ -34,18 +34,18 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
         }
     }
 
-    pub fn insert(&mut self, key: K, order: (Direction, Order)) -> Result<(), ()> {
+    pub fn insert(&mut self, key: K, order: (Direction, Order)) -> usize {
         match order.0 {
             Direction::Ask => self.insert_ask(key, order.1),
             Direction::Bid => self.insert_bid(key, order.1),
         }
     }
 
-    pub fn insert_bid(&mut self, key: K, order: Order) -> Result<(), ()> {
+    pub fn insert_bid(&mut self, key: K, order: Order) -> usize {
         self.bids.insert(key, order)
     }
 
-    pub fn insert_ask(&mut self, key: K, order: Order) -> Result<(), ()> {
+    pub fn insert_ask(&mut self, key: K, order: Order) -> usize {
         self.asks.insert(key, order)
     }
 

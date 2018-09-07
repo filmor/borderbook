@@ -33,7 +33,7 @@ impl<K: Clone + Eq + Hash> Display for Side<K> {
         try!(write!(fmt, "{}\n", self.direction));
 
         for order in self {
-            try!(write!(fmt, "{}\t@\t{}\n", order.volume, order.price))
+            try!(write!(fmt, "{}\t@\t{}\n", order.1.volume, order.1.price))
         }
 
         Ok(())

@@ -1,8 +1,8 @@
 use {Direction, Order};
 
 use std::hash::Hash;
-use std::cmp::Ordering::Equal;
-use std::collections::HashMap;
+use std::cmp::{Ordering::Equal, min};
+use std::collections::{HashMap, VecDeque};
 
 // One side of an orderbook
 // Need:
@@ -17,7 +17,7 @@ where
     inverse_map: HashMap<usize, K>,
 
     orders: Vec<Option<Order>>,
-    sorting: Vec<usize>,
+    sorting: VecDeque<usize>,
 
     free_list: Vec<usize>,
 }
@@ -44,12 +44,16 @@ impl<K: Hash + Eq + Clone> Side<K> {
         }
     }
 
+    pub fn get_key(&self, position: usize) -> &K {
+        self.inverse_map.get(&self.sorting[position]).unwrap()
+    }
+
     pub fn len(&self) -> usize {
         self.sorting.len()
     }
 
-    pub fn get_order_by_index(&self, index: usize) -> Order {
-        self.orders[self.sorting[index]].unwrap()
+    pub fn get_order_by_index(&self, index: usize) -> Option<Order> {
+        self.orders[self.sorting[index]]
     }
 
     fn find_index_for_order(&self, order: Order) -> usize {
@@ -60,7 +64,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
 
         let price = order.price * factor;
 
-        match self.sorting.binary_search_by(|index| {
+        match deque_binary_search_by(&self.sorting, |index| {
             let other_order = self.orders[*index].unwrap();
             let other_price = other_order.price * factor;
             price.partial_cmp(&other_price).unwrap_or(Equal)
@@ -70,7 +74,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
         }
     }
 
-    pub fn insert(&mut self, key: K, order: Order) -> Result<(), ()> {
+    pub fn insert(&mut self, key: K, order: Order) -> usize {
         let sorting_index = self.find_index_for_order(order);
 
         // Insert before or after depending on direction
@@ -86,7 +90,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
         self.map.insert(key.clone(), index);
         self.inverse_map.insert(index, key);
 
-        return Ok(());
+        sorting_index
     }
 
     pub fn remove(&mut self, key: &K) {
@@ -110,6 +114,26 @@ impl<K: Hash + Eq + Clone> Side<K> {
             self.free_list.push(index);
         }
     }
+
+    pub fn remove_first_n(&mut self, n: usize) {
+        let n = min(n, self.len());
+        for i in 0..n {
+            let index = self.sorting[i];
+            let key = &self.inverse_map[&index];
+            self.map.remove(&key);
+            self.orders[index] = None;
+            self.free_list.push(index);
+        }
+        for _ in 0..n {
+            self.sorting.pop_front();
+        }
+    }
+
+    pub fn set_first_volume(&mut self, volume: f64) {
+        if let Some(ref mut order) = self.orders[self.sorting[0]] {
+            order.volume = volume;
+        }
+    }
 }
 
 
@@ -117,7 +141,7 @@ pub struct SideIterator<'a, K>
 where
     K: 'a + Clone + Hash + Eq
 {
-    orderbook: &'a Side<K>,
+    side: &'a Side<K>,
     index: usize,
 }
 
@@ -125,12 +149,12 @@ impl<'a, K> IntoIterator for &'a Side<K>
 where
     K: 'a + Clone + Hash + Eq
 {
-    type Item = Order;
+    type Item = (&'a K, Order);
     type IntoIter = SideIterator<'a, K>;
 
     fn into_iter(self) -> Self::IntoIter {
         SideIterator {
-            orderbook: &self,
+            side: &self,
             index: 0,
         }
     }
@@ -140,15 +164,37 @@ impl<'a, K> Iterator for SideIterator<'a, K>
 where
     K: 'a + Clone + Hash + Eq
 {
-    type Item = Order;
+    type Item = (&'a K, Order);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.orderbook.len() {
+        if self.index < self.side.len() {
             let index = self.index;
             self.index += 1;
-            Some(self.orderbook.get_order_by_index(index))
+            self.side.get_order_by_index(index).map(
+                |order| (self.side.get_key(index), order)
+            )
         } else {
             None
+        }
+    }
+}
+
+
+use std::cmp::{Ordering};
+
+fn deque_binary_search_by<'a, T, F>(q: &'a VecDeque<T>, f: F) -> Result<usize, usize>
+where
+    F: FnMut(&'a T) -> Ordering + Clone
+{
+    let (first, second) = q.as_slices();
+    if let Ok(res) = first.binary_search_by(f.clone()) {
+        Ok(res)
+    }
+    else {
+        let first_len = first.len();
+        match second.binary_search_by(f) {
+            Ok(res) => Ok(res + first_len),
+            Err(res) => Err(res + first_len),
         }
     }
 }
