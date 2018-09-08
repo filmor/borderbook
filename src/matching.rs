@@ -47,7 +47,7 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
         }
 
         loop {
-            match match_orders(&ask.1, &bid.1) {
+            match match_orders(&bid.1, &ask.1) {
                 MatchResult::Unmatched => break,
                 MatchResult::Partial { left: Direction::Ask, volume } => {
                     ask.1.volume -= volume;
@@ -76,6 +76,16 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
                     ask = next!(ask_iter);
                     bid = next!(bid_iter);
                 }
+            }
+
+            if ask.1.volume == 0.0 {
+                asks_dropped += 1;
+                ask = next!(ask_iter);
+            }
+
+            if bid.1.volume == 0.0 {
+                bids_dropped += 1;
+                bid = next!(bid_iter);
             }
         }
     }
@@ -109,6 +119,10 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
         return MatchResult::Unmatched;
     }
 
+    assert!(bid.volume > 0.0);
+    assert!(ask.volume > 0.0);
+
+    let res =
     match ask.volume.partial_cmp(&bid.volume) {
         None =>
             panic!("Volume is NaN"),
@@ -118,7 +132,11 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
             MatchResult::Partial { left: Direction::Ask, volume: bid.volume },
         Some(Ordering::Equal) =>
             MatchResult::Full { volume: ask.volume }
-    }
+    };
+
+    // println!("{:?} + {:?} => {:?}", bid, ask, res);
+
+    res
 }
 
 
