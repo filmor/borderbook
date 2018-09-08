@@ -31,25 +31,47 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
         let mut ask = next!(ask_iter);
         let mut bid = next!(bid_iter);
 
+        macro_rules! push_trade {
+            ($vol:ident) => {
+                // TODO: Proper pricing logic, for this we need to store the
+                //       age of the orders
+                res.push(
+                    Trade {
+                        buy_key: bid.0.clone(),
+                        sell_key: ask.0.clone(),
+                        price: (ask.1.price + bid.1.price) / 2.0,
+                        volume: $vol
+                    }
+                );
+            }
+        }
+
         loop {
             match match_orders(&ask.1, &bid.1) {
-                // TODO Create trades
                 MatchResult::Unmatched => break,
                 MatchResult::Partial { left: Direction::Ask, volume } => {
                     ask.1.volume -= volume;
                     ask_modified = Some(ask.1.volume);
+
+                    push_trade!(volume);
+                    
                     bid = next!(bid_iter);
                     bids_dropped += 1;
                 },
                 MatchResult::Partial { left: Direction::Bid, volume } => {
                     bid.1.volume -= volume;
                     bid_modified = Some(bid.1.volume);
+
+                    push_trade!(volume);
+
                     ask = next!(ask_iter);
                     asks_dropped += 1;
                 },
                 MatchResult::Full { volume } => {
                     asks_dropped += 1;
                     bids_dropped += 1;
+
+                    push_trade!(volume);
 
                     ask = next!(ask_iter);
                     bid = next!(bid_iter);

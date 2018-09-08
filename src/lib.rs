@@ -11,6 +11,7 @@ pub use direction::Direction;
 pub use side::Side;
 pub use orderbook::Orderbook;
 pub use io::parse_orderbook;
+pub use trade::Trade;
 
 
 #[cfg(test)]

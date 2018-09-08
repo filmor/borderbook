@@ -1,5 +1,7 @@
-use {Direction, Order, Side};
+use {Direction, Order, Side, Trade};
+use matching::match_sides;
 
+use std::collections::HashMap;
 use std::hash::Hash;
 
 
@@ -12,46 +14,65 @@ where
 {
     pub asks: Side<K>,
     pub bids: Side<K>,
+
+    order_side: HashMap<K, Direction>,
 }
 
 
 impl<K: Hash + Eq + Clone> Orderbook<K> {
+
     pub fn new() -> Self {
         Self {
             asks: Side::new(Direction::Ask),
             bids: Side::new(Direction::Bid),
+            order_side: Default::default(),
         }
     }
 
     pub fn get_order(&self, key: &K) -> Option<(Direction, Order)> {
-        if let Some(res) = self.asks.get_order(key) {
-            Some((Direction::Ask, res))
-        } else if let Some(res) = self.bids.get_order(key) {
-            Some((Direction::Bid, res))
-        }
-        else {
-            None
-        }
+        self.order_side.get(key).map(
+            |side| {
+                let side = side.clone();
+                (side, self.get_side(side).get_order(key).unwrap())
+            })
     }
 
     pub fn insert(&mut self, key: K, order: (Direction, Order)) -> usize {
-        match order.0 {
-            Direction::Ask => self.insert_ask(key, order.1),
-            Direction::Bid => self.insert_bid(key, order.1),
-        }
+        let (side, order) = order;
+        self.order_side.insert(key.clone(), side);
+        self.get_mut_side(side).insert(key, order)
     }
 
     pub fn insert_bid(&mut self, key: K, order: Order) -> usize {
-        self.bids.insert(key, order)
+        self.insert(key, (Direction::Bid, order))
     }
 
     pub fn insert_ask(&mut self, key: K, order: Order) -> usize {
-        self.asks.insert(key, order)
+        self.insert(key, (Direction::Ask, order))
     }
 
     pub fn remove(&mut self, key: &K) {
-        self.asks.remove(key);
-        self.bids.remove(key);
+        self.order_side.remove(key).map(
+            |side| self.get_mut_side(side).remove(key)
+            );
+    }
+
+    pub fn resolve_matches(&mut self) -> Vec<Trade<K>> {
+        match_sides(self)
+    }
+
+    fn get_side(&self, direction: Direction) -> &Side<K> {
+        match direction {
+            Direction::Ask => &self.asks,
+            Direction::Bid => &self.bids,
+        }
+    }
+
+    fn get_mut_side(&mut self, direction: Direction) -> &mut Side<K> {
+        match direction {
+            Direction::Ask => &mut self.asks,
+            Direction::Bid => &mut self.bids,
+        }
     }
 }
 
