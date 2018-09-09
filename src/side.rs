@@ -130,6 +130,8 @@ impl<K: Hash + Eq + Clone> Side<K> {
     }
 
     pub fn set_first_volume(&mut self, volume: f64) {
+        if self.sorting.len() == 0 { return };
+
         if let Some(ref mut order) = self.orders[self.sorting[0]] {
             order.volume = volume;
         }
@@ -249,5 +251,31 @@ mod tests {
         for order in ob.into_iter() {
             println!("{:?}", order);
         }
+    }
+
+    #[test]
+    fn test_set_first_volume() {
+        let mut side = Side::<u32>::new(Direction::Ask);
+
+        side.set_first_volume(5.0);
+
+        assert_eq!(side.len(), 0);
+
+        side.insert(
+            0,
+            Order {
+                price: 10.0,
+                volume: 1.0
+            }
+        );
+
+        assert_eq!(side.len(), 1);
+
+        let first = side.into_iter().next().unwrap().1;
+        assert_eq!(first.volume, 1.0);
+
+        side.set_first_volume(2.0);
+        let first = side.into_iter().next().unwrap().1;
+        assert_eq!(first.volume, 2.0);
     }
 }

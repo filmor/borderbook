@@ -8,16 +8,6 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
 {
     let mut res = vec![];
 
-    macro_rules! next {
-        ($iter:ident) =>
-        {
-            match ($iter).next() {
-                Some(v) => v,
-                None => return res
-            }
-        }
-    }
-
     let mut asks_dropped = 0;
     let mut bids_dropped = 0;
 
@@ -28,43 +18,55 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
         let mut ask_iter = ob.asks.into_iter();
         let mut bid_iter = ob.bids.into_iter();
 
-        let mut ask = next!(ask_iter);
-        let mut bid = next!(bid_iter);
-
-        macro_rules! push_trade {
-            ($vol:ident) => {
-                // TODO: Proper pricing logic, for this we need to store the
-                //       age of the orders
-                res.push(
-                    Trade {
-                        buy_key: bid.0.clone(),
-                        sell_key: ask.0.clone(),
-                        price: (ask.1.price + bid.1.price) / 2.0,
-                        volume: $vol
-                    }
-                );
-            }
-        }
+        let mut ask = ask_iter.next();
+        let mut bid = bid_iter.next();
 
         loop {
-            match match_orders(&bid.1, &ask.1) {
+            let (ask_key, mut ask_order) =
+                if let Some(val) = ask {
+                    val
+                }
+                else { break };
+
+            let (bid_key, mut bid_order) =
+                if let Some(val) = bid {
+                    val
+                }
+                else { break };
+
+            macro_rules! push_trade {
+                ($vol:ident) => {
+                    // TODO: Proper pricing logic, for this we need to store the
+                    //       age of the orders
+                    res.push(
+                        Trade {
+                            buy_key: bid_key.clone(),
+                            sell_key: ask_key.clone(),
+                            price: (ask_order.price + bid_order.price) / 2.0,
+                            volume: $vol
+                        }
+                    );
+                }
+            }
+
+            match match_orders(&bid_order, &ask_order) {
                 MatchResult::Unmatched => break,
                 MatchResult::Partial { left: Direction::Ask, volume } => {
-                    ask.1.volume -= volume;
-                    ask_modified = Some(ask.1.volume);
+                    ask_order.volume -= volume;
+                    ask_modified = Some(ask_order.volume);
 
                     push_trade!(volume);
-                    
-                    bid = next!(bid_iter);
+
+                    bid = bid_iter.next();
                     bids_dropped += 1;
                 },
                 MatchResult::Partial { left: Direction::Bid, volume } => {
-                    bid.1.volume -= volume;
-                    bid_modified = Some(bid.1.volume);
+                    bid_order.volume -= volume;
+                    bid_modified = Some(bid_order.volume);
 
                     push_trade!(volume);
 
-                    ask = next!(ask_iter);
+                    ask = ask_iter.next();
                     asks_dropped += 1;
                 },
                 MatchResult::Full { volume } => {
@@ -73,19 +75,19 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
 
                     push_trade!(volume);
 
-                    ask = next!(ask_iter);
-                    bid = next!(bid_iter);
+                    ask = ask_iter.next();
+                    bid = bid_iter.next();
                 }
             }
 
-            if ask.1.volume == 0.0 {
+            if ask_order.volume == 0.0 {
                 asks_dropped += 1;
-                ask = next!(ask_iter);
+                ask = ask_iter.next();
             }
 
-            if bid.1.volume == 0.0 {
+            if bid_order.volume == 0.0 {
                 bids_dropped += 1;
-                bid = next!(bid_iter);
+                bid = bid_iter.next();
             }
         }
     }
@@ -134,8 +136,7 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
             MatchResult::Full { volume: ask.volume }
     };
 
-    // println!("{:?} + {:?} => {:?}", bid, ask, res);
-
+    // println!("{:?} + {:?} => {:?}", bid, ask, resprintln
     res
 }
 
