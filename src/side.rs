@@ -45,11 +45,15 @@ impl<K: Hash + Eq + Clone> Side<K> {
     }
 
     pub fn get_key(&self, position: usize) -> &K {
-        self.inverse_map.get(&self.sorting[position]).unwrap()
+        &self.inverse_map[&self.sorting[position]]
     }
 
     pub fn len(&self) -> usize {
         self.sorting.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.sorting.is_empty()
     }
 
     pub fn get_order_by_index(&self, index: usize) -> Option<Order> {
@@ -130,7 +134,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
     }
 
     pub fn set_first_volume(&mut self, volume: f64) {
-        if self.sorting.len() == 0 { return };
+        if self.is_empty() { return }
 
         if let Some(ref mut order) = self.orders[self.sorting[0]] {
             order.volume = volume;

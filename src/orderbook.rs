@@ -32,7 +32,7 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
     pub fn get_order(&self, key: &K) -> Option<(Direction, Order)> {
         self.order_side.get(key).map(
             |side| {
-                let side = side.clone();
+                let side = *side;
                 (side, self.get_side(side).get_order(key).unwrap())
             })
     }
@@ -52,9 +52,10 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
     }
 
     pub fn remove(&mut self, key: &K) {
-        self.order_side.remove(key).map(
-            |side| self.get_mut_side(side).remove(key)
-            );
+        let removed = self.order_side.remove(key);
+        if let Some(side) = removed {
+            self.get_mut_side(side).remove(key)
+        }
     }
 
     pub fn resolve_matches(&mut self) -> Vec<Trade<K>> {
@@ -77,7 +78,15 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
 }
 
 
+impl<K: Hash + Eq + Clone> Default for Orderbook<K>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 }

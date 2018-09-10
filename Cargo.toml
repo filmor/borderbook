@@ -1,6 +1,8 @@
 [package]
-name = "orderbook"
+name = "borderbook"
 version = "0.1.0"
 authors = ["Benedikt Reinartz <filmor@gmail.com>"]
+description = "Limit orderbook and matching implementation"
+license = "GPL-3.0"
 
 [dependencies]

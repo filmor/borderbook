@@ -7,7 +7,7 @@ pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
     let mut res = Orderbook::new();
 
     for line in s.into().lines() {
-        let line: Vec<_> = line.split(";").collect();
+        let line: Vec<_> = line.split(';').collect();
 
         let order = Order {
             volume: line[2].trim().parse().unwrap(),

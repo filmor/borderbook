@@ -95,8 +95,8 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
     ob.asks.remove_first_n(asks_dropped);
     ob.bids.remove_first_n(bids_dropped);
 
-    ask_modified.map(|vol| ob.asks.set_first_volume(vol));
-    bid_modified.map(|vol| ob.bids.set_first_volume(vol));
+    if let Some(vol) = ask_modified { ob.asks.set_first_volume(vol) }
+    if let Some(vol) = bid_modified { ob.bids.set_first_volume(vol) }
 
     res
 }
@@ -124,7 +124,6 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
     assert!(bid.volume > 0.0);
     assert!(ask.volume > 0.0);
 
-    let res =
     match ask.volume.partial_cmp(&bid.volume) {
         None =>
             panic!("Volume is NaN"),
@@ -134,10 +133,7 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
             MatchResult::Partial { left: Direction::Ask, volume: bid.volume },
         Some(Ordering::Equal) =>
             MatchResult::Full { volume: ask.volume }
-    };
-
-    // println!("{:?} + {:?} => {:?}", bid, ask, resprintln
-    res
+    }
 }
 
 
