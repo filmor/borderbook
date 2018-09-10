@@ -1,11 +1,9 @@
-use {Orderbook, Order, Direction};
-use std::hash::Hash;
 use std::cmp::Ordering;
+use std::hash::Hash;
 use trade::Trade;
+use {Direction, Order, Orderbook};
 
-
-pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
-{
+pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>> {
     let mut res = vec![];
 
     let mut asks_dropped = 0;
@@ -22,36 +20,29 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
         let mut bid = bid_iter.next();
 
         loop {
-            let (ask_key, mut ask_order) =
-                if let Some(val) = ask {
-                    val
-                }
-                else { break };
+            let (ask_key, mut ask_order) = if let Some(val) = ask { val } else { break };
 
-            let (bid_key, mut bid_order) =
-                if let Some(val) = bid {
-                    val
-                }
-                else { break };
+            let (bid_key, mut bid_order) = if let Some(val) = bid { val } else { break };
 
             macro_rules! push_trade {
                 ($vol:ident) => {
                     // TODO: Proper pricing logic, for this we need to store the
                     //       age of the orders
-                    res.push(
-                        Trade {
-                            buy_key: bid_key.clone(),
-                            sell_key: ask_key.clone(),
-                            price: (ask_order.price + bid_order.price) / 2.0,
-                            volume: $vol
-                        }
-                    );
-                }
+                    res.push(Trade {
+                        buy_key: bid_key.clone(),
+                        sell_key: ask_key.clone(),
+                        price: (ask_order.price + bid_order.price) / 2.0,
+                        volume: $vol,
+                    });
+                };
             }
 
             match match_orders(&bid_order, &ask_order) {
                 MatchResult::Unmatched => break,
-                MatchResult::Partial { left: Direction::Ask, volume } => {
+                MatchResult::Partial {
+                    left: Direction::Ask,
+                    volume,
+                } => {
                     ask_order.volume -= volume;
                     ask_modified = Some(ask_order.volume);
 
@@ -59,8 +50,11 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
 
                     bid = bid_iter.next();
                     bids_dropped += 1;
-                },
-                MatchResult::Partial { left: Direction::Bid, volume } => {
+                }
+                MatchResult::Partial {
+                    left: Direction::Bid,
+                    volume,
+                } => {
                     bid_order.volume -= volume;
                     bid_modified = Some(bid_order.volume);
 
@@ -68,7 +62,7 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
 
                     ask = ask_iter.next();
                     asks_dropped += 1;
-                },
+                }
                 MatchResult::Full { volume } => {
                     asks_dropped += 1;
                     bids_dropped += 1;
@@ -95,12 +89,15 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
     ob.asks.remove_first_n(asks_dropped);
     ob.bids.remove_first_n(bids_dropped);
 
-    if let Some(vol) = ask_modified { ob.asks.set_first_volume(vol) }
-    if let Some(vol) = bid_modified { ob.bids.set_first_volume(vol) }
+    if let Some(vol) = ask_modified {
+        ob.asks.set_first_volume(vol)
+    }
+    if let Some(vol) = bid_modified {
+        ob.bids.set_first_volume(vol)
+    }
 
     res
 }
-
 
 #[derive(Debug, PartialEq)]
 enum MatchResult {
@@ -112,9 +109,8 @@ enum MatchResult {
     },
     Full {
         volume: f64,
-    }
+    },
 }
-
 
 fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
     if ask.price > bid.price {
@@ -125,17 +121,18 @@ fn match_orders(bid: &Order, ask: &Order) -> MatchResult {
     assert!(ask.volume > 0.0);
 
     match ask.volume.partial_cmp(&bid.volume) {
-        None =>
-            panic!("Volume is NaN"),
-        Some(Ordering::Less) =>
-            MatchResult::Partial { left: Direction::Bid, volume: ask.volume },
-        Some(Ordering::Greater) =>
-            MatchResult::Partial { left: Direction::Ask, volume: bid.volume },
-        Some(Ordering::Equal) =>
-            MatchResult::Full { volume: ask.volume }
+        None => panic!("Volume is NaN"),
+        Some(Ordering::Less) => MatchResult::Partial {
+            left: Direction::Bid,
+            volume: ask.volume,
+        },
+        Some(Ordering::Greater) => MatchResult::Partial {
+            left: Direction::Ask,
+            volume: bid.volume,
+        },
+        Some(Ordering::Equal) => MatchResult::Full { volume: ask.volume },
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -143,26 +140,41 @@ mod tests {
 
     #[test]
     fn test_single_order_match() {
-        let a = Order { price: 5., volume: 10. };
-        let b = Order { price: 10., volume: 5. };
-        let c = Order { price: 5., volume: 5. };
-        let d = Order { price: 10., volume: 10. };
+        let a = Order {
+            price: 5.,
+            volume: 10.,
+        };
+        let b = Order {
+            price: 10.,
+            volume: 5.,
+        };
+        let c = Order {
+            price: 5.,
+            volume: 5.,
+        };
+        let d = Order {
+            price: 10.,
+            volume: 10.,
+        };
 
         assert_eq!(match_orders(&a, &b), MatchResult::Unmatched);
         assert_eq!(
             match_orders(&b, &a),
-            MatchResult::Partial { left: Direction::Ask, volume: 5. }
+            MatchResult::Partial {
+                left: Direction::Ask,
+                volume: 5.
+            }
         );
 
         assert_eq!(match_orders(&a, &d), MatchResult::Unmatched);
-        assert_eq!(
-            match_orders(&d, &a),
-            MatchResult::Full { volume: 10. }
-        );
+        assert_eq!(match_orders(&d, &a), MatchResult::Full { volume: 10. });
 
         assert_eq!(
             match_orders(&a, &c),
-            MatchResult::Partial { left: Direction::Bid, volume: 5. }
+            MatchResult::Partial {
+                left: Direction::Bid,
+                volume: 5.
+            }
         );
     }
 }

@@ -1,7 +1,6 @@
-use std::fmt::{Display, Formatter, Error};
+use std::fmt::{Display, Error, Formatter};
 use std::hash::Hash;
-use {Orderbook, Order, Direction, Side};
-
+use {Direction, Order, Orderbook, Side};
 
 pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
     let mut res = Orderbook::new();
@@ -14,19 +13,17 @@ pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
             price: line[3].trim().parse().unwrap(),
         };
 
-        let side =
-            match line[0].trim() {
-                "a" => Direction::Ask,
-                "b" => Direction::Bid,
-                &_ => panic!("AAAH"),
-            };
+        let side = match line[0].trim() {
+            "a" => Direction::Ask,
+            "b" => Direction::Bid,
+            &_ => panic!("AAAH"),
+        };
 
         let _ = res.insert(line[1].trim().to_string(), (side, order));
     }
 
     res
 }
-
 
 impl<K: Clone + Eq + Hash> Display for Side<K> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
@@ -40,13 +37,11 @@ impl<K: Clone + Eq + Hash> Display for Side<K> {
     }
 }
 
-
 impl<K: Clone + Eq + Hash> Display for Orderbook<K> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         write!(fmt, "{}\n\n{}", self.asks, self.bids)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -54,9 +49,7 @@ mod tests {
 
     #[test]
     fn parse() {
-        let ob = parse_orderbook(
-            "a; a; 10; 15\nb; b; 15; 20\na; c; 3.5; 10.1"
-            );
+        let ob = parse_orderbook("a; a; 10; 15\nb; b; 15; 20\na; c; 3.5; 10.1");
 
         let (side, order) = ob.get_order(&"a".to_string()).unwrap();
         assert_eq!(order.volume, 10.);
@@ -76,15 +69,13 @@ mod tests {
 
     #[test]
     fn format() {
-        let ob = parse_orderbook(
-            "b; a; 5; 10\nb; b; 15; 20\nb; c; 3.5; 10.1"
-            );
+        let ob = parse_orderbook("b; a; 5; 10\nb; b; 15; 20\nb; c; 3.5; 10.1");
 
         let formatted = format!("{}", ob);
         assert_eq!(
             formatted,
             "ask\n\n\nbid\n5\t@\t10\n3.5\t@\t10.1\n15\t@\t20\n"
-            );
+        );
 
         // println!("{}", ob);
     }

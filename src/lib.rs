@@ -1,18 +1,17 @@
-mod order;
-mod side;
-mod orderbook;
-mod trade;
-mod matching;
 mod direction;
 mod io;
+mod matching;
+mod order;
+mod orderbook;
+mod side;
+mod trade;
 
-pub use order::Order;
 pub use direction::Direction;
-pub use side::Side;
-pub use orderbook::Orderbook;
 pub use io::parse_orderbook;
+pub use order::Order;
+pub use orderbook::Orderbook;
+pub use side::Side;
 pub use trade::Trade;
-
 
 #[cfg(test)]
 mod tests {
@@ -23,8 +22,8 @@ mod tests {
         let mut ob = parse_orderbook(
             "b; order1; 10; 10
              a; order2; 5; 10
-             a; order3; 10; 5"
-            );
+             a; order3; 10; 5",
+        );
 
         println!("{}", ob);
 

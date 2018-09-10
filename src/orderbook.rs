@@ -1,9 +1,8 @@
-use {Direction, Order, Side, Trade};
 use matching::match_sides;
+use {Direction, Order, Side, Trade};
 
 use std::collections::HashMap;
 use std::hash::Hash;
-
 
 // One side of an orderbook
 // Need:
@@ -18,9 +17,7 @@ where
     order_side: HashMap<K, Direction>,
 }
 
-
 impl<K: Hash + Eq + Clone> Orderbook<K> {
-
     pub fn new() -> Self {
         Self {
             asks: Side::new(Direction::Ask),
@@ -30,11 +27,10 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
     }
 
     pub fn get_order(&self, key: &K) -> Option<(Direction, Order)> {
-        self.order_side.get(key).map(
-            |side| {
-                let side = *side;
-                (side, self.get_side(side).get_order(key).unwrap())
-            })
+        self.order_side.get(key).map(|side| {
+            let side = *side;
+            (side, self.get_side(side).get_order(key).unwrap())
+        })
     }
 
     pub fn insert(&mut self, key: K, order: (Direction, Order)) -> usize {
@@ -77,14 +73,11 @@ impl<K: Hash + Eq + Clone> Orderbook<K> {
     }
 }
 
-
-impl<K: Hash + Eq + Clone> Default for Orderbook<K>
-{
+impl<K: Hash + Eq + Clone> Default for Orderbook<K> {
     fn default() -> Self {
         Self::new()
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -1,8 +1,8 @@
 use {Direction, Order};
 
-use std::hash::Hash;
-use std::cmp::{Ordering::Equal, min};
+use std::cmp::{min, Ordering::Equal};
 use std::collections::{HashMap, VecDeque};
+use std::hash::Hash;
 
 // One side of an orderbook
 // Need:
@@ -21,7 +21,6 @@ where
 
     free_list: Vec<usize>,
 }
-
 
 impl<K: Hash + Eq + Clone> Side<K> {
     pub fn new(dir: Direction) -> Self {
@@ -134,7 +133,9 @@ impl<K: Hash + Eq + Clone> Side<K> {
     }
 
     pub fn set_first_volume(&mut self, volume: f64) {
-        if self.is_empty() { return }
+        if self.is_empty() {
+            return;
+        }
 
         if let Some(ref mut order) = self.orders[self.sorting[0]] {
             order.volume = volume;
@@ -142,10 +143,9 @@ impl<K: Hash + Eq + Clone> Side<K> {
     }
 }
 
-
 pub struct SideIterator<'a, K>
 where
-    K: 'a + Clone + Hash + Eq
+    K: 'a + Clone + Hash + Eq,
 {
     side: &'a Side<K>,
     index: usize,
@@ -153,7 +153,7 @@ where
 
 impl<'a, K> IntoIterator for &'a Side<K>
 where
-    K: 'a + Clone + Hash + Eq
+    K: 'a + Clone + Hash + Eq,
 {
     type Item = (&'a K, Order);
     type IntoIter = SideIterator<'a, K>;
@@ -168,7 +168,7 @@ where
 
 impl<'a, K> Iterator for SideIterator<'a, K>
 where
-    K: 'a + Clone + Hash + Eq
+    K: 'a + Clone + Hash + Eq,
 {
     type Item = (&'a K, Order);
 
@@ -176,27 +176,25 @@ where
         if self.index < self.side.len() {
             let index = self.index;
             self.index += 1;
-            self.side.get_order_by_index(index).map(
-                |order| (self.side.get_key(index), order)
-            )
+            self.side
+                .get_order_by_index(index)
+                .map(|order| (self.side.get_key(index), order))
         } else {
             None
         }
     }
 }
 
-
-use std::cmp::{Ordering};
+use std::cmp::Ordering;
 
 fn deque_binary_search_by<'a, T, F>(q: &'a VecDeque<T>, f: F) -> Result<usize, usize>
 where
-    F: FnMut(&'a T) -> Ordering + Clone
+    F: FnMut(&'a T) -> Ordering + Clone,
 {
     let (first, second) = q.as_slices();
     if let Ok(res) = first.binary_search_by(f.clone()) {
         Ok(res)
-    }
-    else {
+    } else {
         let first_len = first.len();
         match second.binary_search_by(f) {
             Ok(res) => Ok(res + first_len),
@@ -204,7 +202,6 @@ where
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -269,8 +266,8 @@ mod tests {
             0,
             Order {
                 price: 10.0,
-                volume: 1.0
-            }
+                volume: 1.0,
+            },
         );
 
         assert_eq!(side.len(), 1);
