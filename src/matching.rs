@@ -26,13 +26,29 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
 
             macro_rules! push_trade {
                 ($vol:ident) => {
-                    // TODO: Proper pricing logic, for this we need to store the
-                    //       age of the orders
+                    let (ts, aggressor, price) =
+                        match Ord::cmp(&ask_order.timestamp, &bid_order.timestamp) {
+                            Ordering::Less => {
+                                (bid_order.timestamp, Some(Direction::Ask), ask_order.price)
+                            }
+                            Ordering::Greater => {
+                                (ask_order.timestamp, Some(Direction::Bid), bid_order.price)
+                            }
+                            Ordering::Equal => (
+                                ask_order.timestamp,
+                                None,
+                                (ask_order.price + bid_order.price) / 2.0,
+                            ),
+                        };
+
                     res.push(Trade {
                         buy_key: bid_key.clone(),
                         sell_key: ask_key.clone(),
-                        price: (ask_order.price + bid_order.price) / 2.0,
+                        price: price,
                         volume: $vol,
+                        // TODO:
+                        timestamp: ts,
+                        aggressor_side: aggressor,
                     });
                 };
             }
@@ -140,22 +156,10 @@ mod tests {
 
     #[test]
     fn test_single_order_match() {
-        let a = Order {
-            price: 5.,
-            volume: 10.,
-        };
-        let b = Order {
-            price: 10.,
-            volume: 5.,
-        };
-        let c = Order {
-            price: 5.,
-            volume: 5.,
-        };
-        let d = Order {
-            price: 10.,
-            volume: 10.,
-        };
+        let a = Order::new(5., 10.);
+        let b = Order::new(10., 5.);
+        let c = Order::new(5., 5.);
+        let d = Order::new(10., 10.);
 
         assert_eq!(match_orders(&a, &b), MatchResult::Unmatched);
         assert_eq!(

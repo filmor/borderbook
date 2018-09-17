@@ -1,16 +1,18 @@
 use std::fmt::{Display, Error, Formatter};
 use std::hash::Hash;
-use {Direction, Order, Orderbook, Side};
+use {Direction, Order, Orderbook, Side, Timestamp};
 
 pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
     let mut res = Orderbook::new();
 
-    for line in s.into().lines() {
+    // Fake timestamp for now
+    for (n, line) in s.into().lines().enumerate() {
         let line: Vec<_> = line.split(';').collect();
 
         let order = Order {
             volume: line[2].trim().parse().unwrap(),
             price: line[3].trim().parse().unwrap(),
+            timestamp: Timestamp(n as u64),
         };
 
         let side = match line[0].trim() {

@@ -189,7 +189,7 @@ use std::cmp::Ordering;
 
 fn deque_binary_search_by<'a, T, F>(q: &'a VecDeque<T>, f: F) -> Result<usize, usize>
 where
-    F: FnMut(&'a T) -> Ordering + Clone,
+    F: Clone + FnMut(&'a T) -> Ordering,
 {
     let (first, second) = q.as_slices();
     if let Ok(res) = first.binary_search_by(f.clone()) {
@@ -211,41 +211,11 @@ mod tests {
     fn it_works() {
         let mut ob = Side::new(Direction::Bid);
 
-        ob.insert(
-            "first",
-            Order {
-                price: 10.0,
-                volume: 10.0,
-            },
-        );
-        ob.insert(
-            "second",
-            Order {
-                price: 50.0,
-                volume: 10.0,
-            },
-        );
-        ob.insert(
-            "third",
-            Order {
-                price: 5.0,
-                volume: 10.0,
-            },
-        );
-        ob.insert(
-            "fourth",
-            Order {
-                price: 20.0,
-                volume: 10.0,
-            },
-        );
-        ob.insert(
-            "fifth",
-            Order {
-                price: 13.0,
-                volume: 10.0,
-            },
-        );
+        ob.insert("first", Order::new(10., 10.));
+        ob.insert("second", Order::new(50., 10.));
+        ob.insert("third", Order::new(5., 10.));
+        ob.insert("fourth", Order::new(20., 10.));
+        ob.insert("fifth", Order::new(13., 10.));
 
         ob.remove(&"fourth");
 
@@ -262,13 +232,7 @@ mod tests {
 
         assert_eq!(side.len(), 0);
 
-        side.insert(
-            0,
-            Order {
-                price: 10.0,
-                volume: 1.0,
-            },
-        );
+        side.insert(0, Order::new(10., 1.));
 
         assert_eq!(side.len(), 1);
 

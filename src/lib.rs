@@ -4,6 +4,7 @@ mod matching;
 mod order;
 mod orderbook;
 mod side;
+mod timestamp;
 mod trade;
 
 pub use direction::Direction;
@@ -11,6 +12,7 @@ pub use io::parse_orderbook;
 pub use order::Order;
 pub use orderbook::Orderbook;
 pub use side::Side;
+pub use timestamp::Timestamp;
 pub use trade::Trade;
 
 #[cfg(test)]
