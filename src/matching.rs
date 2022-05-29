@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::hash::Hash;
-use trade::Trade;
-use {Direction, Order, Orderbook};
+use crate::trade::Trade;
+use crate::{Direction, Order, Orderbook};
 
 pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>> {
     let mut res = vec![];

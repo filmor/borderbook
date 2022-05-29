@@ -1,5 +1,5 @@
-use matching::match_sides;
-use {Direction, Order, Side, Trade};
+use crate::matching::match_sides;
+use crate::{Direction, Order, Side, Trade};
 
 use std::collections::HashMap;
 use std::hash::Hash;

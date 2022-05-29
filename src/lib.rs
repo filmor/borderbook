@@ -7,13 +7,13 @@ mod side;
 mod timestamp;
 mod trade;
 
-pub use direction::Direction;
-pub use io::parse_orderbook;
-pub use order::Order;
-pub use orderbook::Orderbook;
-pub use side::Side;
-pub use timestamp::Timestamp;
-pub use trade::Trade;
+pub use crate::direction::Direction;
+pub use crate::io::parse_orderbook;
+pub use crate::order::Order;
+pub use crate::orderbook::Orderbook;
+pub use crate::side::Side;
+pub use crate::timestamp::Timestamp;
+pub use crate::trade::Trade;
 
 #[cfg(test)]
 mod tests {

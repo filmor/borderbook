@@ -1,4 +1,4 @@
-use {Direction, Order};
+use crate::{Direction, Order};
 
 use std::cmp::{min, Ordering::Equal};
 use std::collections::{HashMap, VecDeque};

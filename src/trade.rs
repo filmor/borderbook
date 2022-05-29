@@ -1,4 +1,4 @@
-use {Direction, Timestamp};
+use crate::{Direction, Timestamp};
 
 #[derive(Debug)]
 pub struct Trade<K> {
