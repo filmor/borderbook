@@ -111,7 +111,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
             self.orders[index] = None;
             {
                 let key = &self.inverse_map[&index];
-                self.map.remove(&key);
+                self.map.remove(key);
             }
             self.inverse_map.remove(&index);
             self.free_list.push(index);
@@ -123,7 +123,7 @@ impl<K: Hash + Eq + Clone> Side<K> {
         for i in 0..n {
             let index = self.sorting[i];
             let key = &self.inverse_map[&index];
-            self.map.remove(&key);
+            self.map.remove(key);
             self.orders[index] = None;
             self.free_list.push(index);
         }
@@ -160,7 +160,7 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         SideIterator {
-            side: &self,
+            side: self,
             index: 0,
         }
     }

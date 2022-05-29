@@ -1,8 +1,9 @@
-use std::cmp::Ordering;
-use std::hash::Hash;
 use crate::trade::Trade;
 use crate::{Direction, Order, Orderbook};
+use std::cmp::Ordering;
+use std::hash::Hash;
 
+#[allow(clippy::while_let_loop)]
 pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>> {
     let mut res = vec![];
 
@@ -44,7 +45,7 @@ pub fn match_sides<K: Hash + Eq + Clone>(ob: &mut Orderbook<K>) -> Vec<Trade<K>>
                     res.push(Trade {
                         buy_key: bid_key.clone(),
                         sell_key: ask_key.clone(),
-                        price: price,
+                        price,
                         volume: $vol,
                         // TODO:
                         timestamp: ts,

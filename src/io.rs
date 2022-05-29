@@ -1,6 +1,6 @@
+use crate::{Direction, Order, Orderbook, Side, Timestamp};
 use std::fmt::{Display, Error, Formatter};
 use std::hash::Hash;
-use crate::{Direction, Order, Orderbook, Side, Timestamp};
 
 pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
     let mut res = Orderbook::new();
@@ -29,10 +29,10 @@ pub fn parse_orderbook<S: Into<String>>(s: S) -> Orderbook<String> {
 
 impl<K: Clone + Eq + Hash> Display for Side<K> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        write!(fmt, "{}\n", self.direction)?;
+        writeln!(fmt, "{}", self.direction)?;
 
         for order in self {
-            write!(fmt, "{}\t@\t{}\n", order.1.volume, order.1.price)?
+            writeln!(fmt, "{}\t@\t{}", order.1.volume, order.1.price)?
         }
 
         Ok(())
